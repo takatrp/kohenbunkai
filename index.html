@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>固変分解 見直し支援ツール｜松本会計</title>
+<style>
+  :root{
+    --brand:#578899;
+    --brand-dark:#416a78;
+    --brand-soft:#eaf3f6;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --line:#d9e2e7;
+    --bg:#f7fafc;
+    --card:#ffffff;
+    --ok:#0f766e;
+    --warn:#b45309;
+    --danger:#b91c1c;
+    --shadow:0 10px 28px rgba(31,41,55,.08);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#f6fafb 0%,#f7fafc 42%,#ffffff 100%);
+    line-height:1.75;
+  }
+  header{
+    color:#fff;
+    background:
+      radial-gradient(circle at 86% 18%, rgba(255,255,255,.18), transparent 34%),
+      linear-gradient(135deg,var(--brand),var(--brand-dark));
+    padding:30px 16px 24px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  .hero{
+    display:grid;
+    grid-template-columns:1.25fr .75fr;
+    gap:22px;
+    align-items:center;
+  }
+  @media(max-width:900px){.hero{grid-template-columns:1fr}}
+  h1{font-size:clamp(25px,3.4vw,40px);line-height:1.25;margin:0 0 12px;font-weight:900;letter-spacing:.01em}
+  .lead{margin:0;font-size:16px;opacity:.95;max-width:760px}
+  .heroCard{
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.26);
+    border-radius:22px;
+    padding:16px;
+    backdrop-filter: blur(7px);
+  }
+  .heroCard strong{display:block;font-size:15px;margin-bottom:8px}
+  .heroCard ul{margin:0;padding-left:20px;font-size:14px}
+  .heroCard li{margin:4px 0}
+  .tabs{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:20px;
+  }
+  .tabBtn{
+    border:none;
+    border-radius:999px;
+    padding:10px 14px;
+    background:rgba(255,255,255,.16);
+    color:#fff;
+    cursor:pointer;
+    font-weight:800;
+    border:1px solid rgba(255,255,255,.25);
+  }
+  .tabBtn.active{background:#fff;color:var(--brand-dark)}
+  main{padding:20px 16px 36px}
+  .layout{
+    display:grid;
+    grid-template-columns:280px 1fr;
+    gap:18px;
+    align-items:start;
+  }
+  @media(max-width:960px){.layout{grid-template-columns:1fr}}
+  aside{
+    position:sticky;
+    top:12px;
+  }
+  @media(max-width:960px){aside{position:static}}
+  .panel{
+    background:var(--card);
+    border:1px solid #e6edf1;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .panelHd{
+    padding:14px 16px;
+    border-bottom:1px solid #eef2f5;
+    color:var(--brand-dark);
+    font-weight:900;
+    background:#fff;
+  }
+  .panelBd{padding:16px}
+  .sideNav{display:grid;gap:9px}
+  .sideNav button{
+    width:100%;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    border-radius:13px;
+    padding:11px 12px;
+    cursor:pointer;
+    text-align:left;
+    font-weight:800;
+  }
+  .sideNav button.active{
+    background:var(--brand-soft);
+    color:var(--brand-dark);
+    border-color:#b7d1da;
+  }
+  .section{display:none}
+  .section.active{display:block;animation:fade .18s ease}
+  @keyframes fade{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  h2{font-size:24px;margin:0 0 12px;color:var(--brand-dark);line-height:1.35}
+  h3{font-size:17px;margin:0 0 8px;color:var(--brand-dark);line-height:1.45}
+  p{margin:0 0 12px}
+  .muted{color:var(--muted)}
+  .small{font-size:13px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:14px 0}
+  @media(max-width:900px){.cards{grid-template-columns:1fr}}
+  .cards.two{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:800px){.cards.two{grid-template-columns:1fr}}
+  .card{
+    border:1px solid #e5ebef;
+    background:#fff;
+    border-radius:16px;
+    padding:15px;
+  }
+  .card.em{
+    background:linear-gradient(180deg,#ffffff,#f7fbfc);
+    border-color:#c9dde4;
+  }
+  .note,.warn,.ok{
+    border-radius:16px;
+    padding:14px 15px;
+    margin:14px 0;
+  }
+  .note{background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8}
+  .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412}
+  .ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+  .list{margin:0;padding-left:20px}
+  .list li{margin:4px 0}
+  .pillBox{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:800;background:#f3f4f6;color:#374151}
+  .pill.v{background:#dcfce7;color:#166534}
+  .pill.f{background:#dbeafe;color:#1d4ed8}
+  .pill.j{background:#fef3c7;color:#92400e}
+  .pill.r{background:#fee2e2;color:#991b1b}
+  .field{display:grid;gap:7px;margin-bottom:13px}
+  label{font-size:13px;font-weight:800;color:var(--muted)}
+  select,input[type="text"]{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:13px;
+    padding:11px 12px;
+    font:inherit;
+    background:#fff;
+  }
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:760px){.row{grid-template-columns:1fr}}
+  .btn{
+    appearance:none;
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    border-radius:13px;
+    padding:10px 13px;
+    cursor:pointer;
+    font-weight:900;
+  }
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.ghost{background:var(--brand-soft);border-color:#c2d9e1;color:var(--brand-dark)}
+  .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
+  .tableWrap{overflow:auto;border:1px solid #e5ebef;border-radius:15px;margin:13px 0;background:#fff}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+  th,td{border:1px solid #e5ebef;padding:10px 9px;vertical-align:top;text-align:left}
+  th{background:#f8fafc;color:#374151}
+  .scoreGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0}
+  @media(max-width:800px){.scoreGrid{grid-template-columns:1fr}}
+  .question{
+    border:1px solid #e5ebef;
+    border-radius:15px;
+    padding:13px;
+    background:#fff;
+  }
+  .question label{display:flex;align-items:flex-start;gap:10px;color:var(--ink);font-size:14px;font-weight:700}
+  .question input{margin-top:5px;transform:scale(1.08)}
+  .weightTag{
+    display:inline-flex;
+    align-items:center;
+    border-radius:999px;
+    padding:3px 8px;
+    margin-left:8px;
+    font-size:12px;
+    font-weight:900;
+    background:#eef2f7;
+    color:#475569;
+  }
+  .weightTag.high{background:#fee2e2;color:#991b1b}
+  .weightTag.mid{background:#fef3c7;color:#92400e}
+  .resultBox{
+    border-radius:17px;
+    padding:16px;
+    background:#fff;
+    border:1px solid #e5ebef;
+    box-shadow:var(--shadow);
+    margin-top:14px;
+  }
+  .meter{
+    height:14px;
+    border-radius:999px;
+    background:#eef2f7;
+    overflow:hidden;
+    margin:10px 0 8px;
+  }
+  .meter span{display:block;height:100%;width:0;background:linear-gradient(90deg,#f97316,#578899);transition:.25s}
+  .scenario{
+    border-left:5px solid var(--brand);
+    background:#f8fbfc;
+    border-radius:12px;
+    padding:12px 14px;
+    margin:10px 0;
+  }
+  .calloutTitle{font-weight:900;margin-bottom:4px;color:var(--brand-dark)}
+  .quote{
+    padding:14px 15px;
+    border-radius:16px;
+    background:#f9fafb;
+    border:1px dashed #cbd5e1;
+    margin:12px 0;
+  }
+  .sheetBox{
+    background:#ffffff;
+    border:1px solid #e5ebef;
+    border-radius:16px;
+    padding:15px;
+    margin-top:14px;
+  }
+  .sheetPreview{
+    background:#fcfcfd;
+    border:1px solid #e5ebef;
+    border-radius:16px;
+    padding:16px;
+    margin-top:12px;
+  }
+  .sheetPreview h3{margin-top:0}
+  .printOnlyHeader{
+    display:none;
+  }
+  @media print{
+    header, aside, .tabs, .sideNav, .actions, .noPrint{display:none!important}
+    main{padding:0}
+    .layout{display:block}
+    .panel{box-shadow:none;border:none}
+    .panelHd{display:none}
+    .panelBd{padding:0}
+    .section{display:block}
+    body{background:#fff}
+    .printOnlyHeader{display:block;margin-bottom:14px}
+    .sheetPreview{border:none;padding:0}
+  }
+  .footerNote{margin-top:20px;padding-top:14px;border-top:1px solid #e5ebef;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <div>
+      <h1>固変分解 見直し支援ツール</h1>
+      <p class="lead">
+        TKC会計ソフトで設定済みの固変分解を、業種特性と費用の実態に照らして見直すための所内用ツールです。
+        全件を精査するのではなく、担当者が「この分類は本当に実態に合っているか」と気づくきっかけを作ります。
+      </p>
+      <div class="tabs">
+        <button class="tabBtn active" data-tab="concept" onclick="showTab('concept')">基本思想</button>
+        <button class="tabBtn" data-tab="selfcheck" onclick="showTab('selfcheck')">見直し診断</button>
+        <button class="tabBtn" data-tab="industry" onclick="showTab('industry')">業種別の見方</button>
+        <button class="tabBtn" data-tab="talk" onclick="showTab('talk')">確認トーク</button>
+      </div>
+    </div>
+    <div class="heroCard">
+      <strong>このツールでやること</strong>
+      <ul>
+        <li>既存の固変分解を疑う視点を持つ</li>
+        <li>業種ごとの費用構造を確認する</li>
+        <li>見直すべき科目を発見する</li>
+        <li>顧問先に聞くべき質問を準備する</li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap layout">
+    <aside class="panel">
+      <div class="panelHd">ナビゲーション</div>
+      <div class="panelBd">
+        <div class="sideNav">
+          <button class="active" data-tab="concept" onclick="showTab('concept')">1. 基本思想</button>
+          <button data-tab="selfcheck" onclick="showTab('selfcheck')">2. 見直し診断</button>
+          <button data-tab="industry" onclick="showTab('industry')">3. 業種別の見方</button>
+          <button data-tab="talk" onclick="showTab('talk')">4. 確認トーク</button>
+        </div>
+
+        <div class="footerNote">
+          <strong>位置づけ</strong><br>
+          このツールは、固変分解の入力・出力を代行するものではありません。<br>
+          TKC会計ソフト上の既存設定を、担当者が見直すための教育・確認ツールです。
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel">
+      <div class="panelHd" id="mainTitle">1. 基本思想</div>
+      <div class="panelBd">
+
+        <div id="concept" class="section active">
+          <h2>限界利益率は、経営助言の出発点です</h2>
+          <p>
+            松本会計ツールポータルでは、限界利益率を起点として、必要売上、値上げ効果、人件費、設備投資、自動化効果、打ち手検討へつなげます。
+            しかし、最初の限界利益率が実態とずれていれば、その後の試算も経営者の実感から離れてしまいます。
+          </p>
+
+          <div class="warn">
+            <strong>大事な前提</strong><br>
+            TKC会計ソフト上では、ひとまずの固変分解が設定されています。問題は、設定が存在することではなく、
+            <strong>その分類が顧問先の実態に合っているかを見直す機会が少ないこと</strong>です。
+          </div>
+
+          <div class="note">
+            <strong>もう一つの重要前提：月次決算の精度</strong><br>
+            固変分解が正しくても、月次棚卸、月次減価償却、未払費用・未収収益、前払費用・前受収益などの月次処理が不十分であれば、
+            月次の限界利益率や固定費は実態からずれます。<br>
+            このツールは、固変分解そのものの見直しに加えて、<strong>FXクラウド上の月次運用が経営判断に耐える水準になっているか</strong>を確認するきっかけとして使います。
+          </div>
+
+          <div class="cards">
+            <div class="card em">
+              <h3>固定費</h3>
+              <p>短期的には、売上が増減しても大きく変わりにくい費用。</p>
+              <div class="pillBox">
+                <span class="pill f">役員報酬</span>
+                <span class="pill f">正社員給与</span>
+                <span class="pill f">家賃</span>
+                <span class="pill f">減価償却費</span>
+              </div>
+            </div>
+            <div class="card em">
+              <h3>変動費</h3>
+              <p>売上・数量・案件数・操業度に応じて増減しやすい費用。</p>
+              <div class="pillBox">
+                <span class="pill v">仕入</span>
+                <span class="pill v">材料費</span>
+                <span class="pill v">案件別外注費</span>
+                <span class="pill v">販売手数料</span>
+              </div>
+            </div>
+            <div class="card em">
+              <h3>個別判断</h3>
+              <p>業種・契約・運用により性格が変わる費用。</p>
+              <div class="pillBox">
+                <span class="pill j">外注費</span>
+                <span class="pill j">人件費</span>
+                <span class="pill j">広告費</span>
+                <span class="pill j">水道光熱費</span>
+              </div>
+            </div>
+          </div>
+
+          <h2>見直しの核心</h2>
+          <div class="quote">
+            勘定科目名で決めるのではなく、<strong>売上・数量・操業度との連動性</strong>で見る。<br>
+            さらに、月次棚卸・月次減価償却等が適切に計上されているかを確認し、<strong>月次の数字そのものを経営判断に使える状態にする</strong>。
+          </div>
+
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>よくある思い込み</th>
+                  <th>本来の確認ポイント</th>
+                  <th>危険性</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>売上原価だから変動費</td>
+                  <td>売上原価内に固定的な労務費・償却費・工場家賃がないか</td>
+                  <td>限界利益率を低く見積もる可能性</td>
+                </tr>
+                <tr>
+                  <td>人件費だから固定費</td>
+                  <td>歩合給・出来高給・繁忙期パート・コマ数連動講師料がないか</td>
+                  <td>売上増加時の必要コストを見落とす可能性</td>
+                </tr>
+                <tr>
+                  <td>外注費だから変動費</td>
+                  <td>案件別外注か、毎月定額の業務委託か</td>
+                  <td>実態より変動費が大きく見える可能性</td>
+                </tr>
+                <tr>
+                  <td>水道光熱費は固定費</td>
+                  <td>工場・冷凍冷蔵・飲食・加工業などで操業度に連動する部分がないか</td>
+                  <td>原価上昇・稼働率変動の影響を見落とす可能性</td>
+                </tr>
+                <tr>
+                  <td>固変分解だけ見れば十分</td>
+                  <td>月次棚卸、月次減価償却、未払・未収、前払・前受などが月次で反映されているか</td>
+                  <td>分類が正しくても、月次の利益・限界利益率そのものがずれる可能性</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>月次運用で特に注意すること</h2>
+          <div class="cards two">
+            <div class="card">
+              <h3>限界利益率を歪めやすい処理</h3>
+              <ul class="list">
+                <li>月次棚卸を行わず、仕入額だけで原価を見ている</li>
+                <li>期末だけ棚卸調整しており、月次の粗利が大きくぶれる</li>
+                <li>外注費・材料費の請求遅れを月次で反映していない</li>
+                <li>売上計上月と原価計上月がずれている</li>
+                <li>水産加工業などで、保管料や冷凍冷蔵費の発生月だけ利益率が落ちて見える</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>固定費を歪めやすい処理</h3>
+              <ul class="list">
+                <li>月次減価償却費を計上していない</li>
+                <li>賞与・社会保険料・保険料・年払費用を発生月だけで処理している</li>
+                <li>家賃・リース料・保守料などの前払・未払を月次で調整していない</li>
+                <li>借入利息や保証料などを期末・支払時だけで処理している</li>
+                <li>季節性のある費用を一時費用として放置している</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ok">
+            <strong>実務上の考え方</strong><br>
+            月次決算は、税務申告のためだけではなく、経営判断のための数字を毎月整える作業です。
+            固変分解の見直しと同時に、月次棚卸・月次減価償却・発生主義的な月次処理がどこまでできているかを確認してください。
+          </div>
+
+          <div class="ok">
+            <strong>このツールのゴール</strong><br>
+            担当者が「この顧問先の固変分解は、今の事業実態に合っているだろうか」と考えるきっかけを作ることです。
+            全件精査ではなく、違和感のある先・重要な先・経営助言に使う先から優先的に見直します。
+          </div>
+        </div>
+
+        <div id="selfcheck" class="section">
+          <h2>見直し診断</h2>
+          <p>
+            次の項目に当てはまるほど、既存の固変分解を見直す優先度が高くなります。
+            これは記録用ではなく、担当者が「どの顧問先を深掘りすべきか」を判断するための簡易診断です。
+          </p>
+          <div class="note">
+            <strong>判定方法</strong><br>
+            すべての項目を同じ重みでは判定しません。限界利益率の違和感や売上原価内の固定費混入は重めに評価し、
+            <strong>月次棚卸・月次減価償却・未払未収等の未反映は「最重要項目」</strong>として、単独でも高リスク判定になるようにしています。
+          </div>
+
+          <div class="scoreGrid" id="diagnosisQuestions"></div>
+
+          <div class="actions">
+            <button class="btn primary" onclick="calcDiagnosis()">見直し優先度を判定</button>
+            <button class="btn" onclick="resetDiagnosis()">リセット</button>
+          </div>
+
+          <div class="resultBox" id="diagnosisResult">
+            <div class="calloutTitle">判定結果</div>
+            <p class="muted">チェック後に「見直し優先度を判定」を押してください。</p>
+            <div class="meter"><span id="meterBar"></span></div>
+          </div>
+
+          <h2 style="margin-top:22px">優先的に見直すべき顧問先</h2>
+          <div class="cards two">
+            <div class="card">
+              <h3>すぐ見直したい先</h3>
+              <ul class="list">
+                <li>限界利益率が社長の実感と合っていない</li>
+                <li>売上増加に対して利益が残っていない</li>
+                <li>価格改定・人員増・設備投資の相談がある</li>
+                <li>継続MASや打ち手検討ツールに使う予定がある</li>
+                <li>外注費・人件費・電力費など大きな個別判断科目がある</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>後回しでもよい先</h3>
+              <ul class="list">
+                <li>費用構造が単純で大きな変化がない</li>
+                <li>限界利益率が安定している</li>
+                <li>経営助言・計画作成にまだ使っていない</li>
+                <li>売上規模や影響額が小さい</li>
+                <li>過去に丁寧な見直しを実施済み</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="industry" class="section">
+          <h2>業種別の見方</h2>
+          <p>
+            業種を選ぶと、その業種で特に注意すべき費用構造、見直しポイント、顧問先への確認質問が表示されます。
+            これは最終判断表ではなく、既存設定を疑うための観点集です。
+          </p>
+
+          <div class="row">
+            <div class="field">
+              <label for="industrySelect">業種を選択</label>
+              <select id="industrySelect" onchange="renderIndustry()"></select>
+            </div>
+            <div class="field">
+              <label for="keywordInput">科目・キーワード検索</label>
+              <input type="text" id="keywordInput" placeholder="例：外注費、人件費、燃料費、電力費" oninput="renderIndustry()" />
+            </div>
+          </div>
+
+          <div id="industryView"></div>
+        </div>
+
+        <div id="talk" class="section">
+          <h2>顧問先への確認トーク</h2>
+          <p>
+            固変分解の見直しは、担当者だけで完結させるものではありません。
+            帳簿から仮説を立てたうえで、顧問先に実態を確認することが重要です。
+          </p>
+
+          <div class="cards two">
+            <div class="card em">
+              <h3>導入トーク</h3>
+              <p>
+                「御社の数字を、今後の経営判断により使いやすくするために、売上に連動して増える費用と、売上に関係なくかかる費用の分け方を確認させてください。」
+              </p>
+            </div>
+            <div class="card em">
+              <h3>固変分解という言葉を使わない説明</h3>
+              <p>
+                「売上が増えたときに一緒に増える費用と、売上が増えてもあまり変わらない費用を分けると、いくら売れば黒字になるかが見えやすくなります。」
+              </p>
+            </div>
+          </div>
+
+          <h2>科目別の聞き方</h2>
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>科目・費用</th>
+                  <th>質問例</th>
+                  <th>判断の方向性</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>外注費</td>
+                  <td>「この外注費は、案件ごとに発生しますか。それとも毎月ほぼ定額ですか。」</td>
+                  <td>案件別なら変動費寄り。定額なら固定費寄り。</td>
+                </tr>
+                <tr>
+                  <td>人件費</td>
+                  <td>「売上や忙しさに応じて、勤務時間や人数を調整していますか。」</td>
+                  <td>固定給中心なら固定費寄り。歩合・出来高・変動シフトなら変動費寄り。</td>
+                </tr>
+                <tr>
+                  <td>広告宣伝費</td>
+                  <td>「毎月決まった広告ですか。成果や売上に応じて増える広告ですか。」</td>
+                  <td>定額広告は固定費寄り。成果報酬型は変動費寄り。</td>
+                </tr>
+                <tr>
+                  <td>水道光熱費</td>
+                  <td>「売上や稼働が増えると、電気代・ガス代は大きく増えますか。」</td>
+                  <td>基本料金部分は固定費、使用量部分は変動費寄り。</td>
+                </tr>
+                <tr>
+                  <td>車両費・燃料費</td>
+                  <td>「走行距離や配送件数に応じて増える部分と、保有しているだけでかかる部分を分けられますか。」</td>
+                  <td>燃料・高速代は変動費寄り。保険・リース・償却は固定費寄り。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>面談での締め方</h2>
+          <div class="quote">
+            「この分け方が整理できると、御社の限界利益率がより実態に近くなります。そこから、必要売上、値上げの効果、人を増やした場合の必要売上などを具体的に見られるようになります。」
+          </div>
+
+          <h2 style="margin-top:24px">ヒアリングシート出力</h2>
+          <p>
+            顧問先への確認時に使う簡易ヒアリングシートを作成できます。
+            業種別の確認質問と、共通の確認事項をまとめて印刷できます。
+          </p>
+
+          <div class="sheetBox noPrint">
+            <div class="row">
+              <div class="field">
+                <label for="hearingClient">顧問先名</label>
+                <input type="text" id="hearingClient" placeholder="例：株式会社〇〇" />
+              </div>
+              <div class="field">
+                <label for="hearingStaff">担当者名</label>
+                <input type="text" id="hearingStaff" placeholder="例：松本考史" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="hearingDate">確認日</label>
+                <input type="text" id="hearingDate" placeholder="例：2026-04-24" />
+              </div>
+              <div class="field">
+                <label for="hearingIndustrySelect">対象業種</label>
+                <select id="hearingIndustrySelect"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="hearingFocus">特に確認したい科目・論点</label>
+              <input type="text" id="hearingFocus" placeholder="例：外注費、人件費、燃料費、保管料、冷凍冷蔵の電力費" />
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="generateHearingSheet()">ヒアリングシートを作成</button>
+              <button class="btn ghost" onclick="printHearingSheet()">印刷</button>
+            </div>
+          </div>
+
+          <div id="hearingSheetPreview" class="sheetPreview">
+            <p class="muted">「ヒアリングシートを作成」を押すと、ここに印刷用シートが表示されます。</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const titles = {
+  concept:"1. 基本思想",
+  selfcheck:"2. 見直し診断",
+  industry:"3. 業種別の見方",
+  talk:"4. 確認トーク"
+};
+
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tabBtn,.sideNav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll(`[data-tab="${id}"]`).forEach(b=>b.classList.add('active'));
+  document.getElementById('mainTitle').textContent = titles[id];
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+const diagnosisItems = [
+  {text:"限界利益率が月によって大きく上下している", weight:2, level:"mid"},
+  {text:"社長の実感と限界利益率が合っていない", weight:2, level:"mid"},
+  {text:"売上が増えているのに利益が残っていない", weight:2, level:"mid"},
+  {text:"外注費・人件費・水道光熱費・車両費など個別判断科目が大きい", weight:1.5, level:"normal"},
+  {text:"新商品・新サービス・新店舗・新設備など、事業構造に変化があった", weight:2, level:"mid"},
+  {text:"価格改定、設備投資、人員増、借入返済などの相談がある", weight:1.5, level:"normal"},
+  {text:"継続MASや打ち手検討ツールに使う前提数字として不安がある", weight:2, level:"mid"},
+  {text:"売上原価の中に固定的な人件費・償却費・家賃等が含まれていそう", weight:2, level:"mid"},
+  {text:"担当者交代などで、過去の分類根拠が分からない", weight:1, level:"normal"},
+  {text:"業種特有の費用構造があるが、標準的な分類のまま運用されている", weight:1.5, level:"normal"},
+  {text:"月次棚卸・月次減価償却・未払未収などが月次で十分に反映されていない", weight:8, level:"high", critical:true}
+];
+
+function renderDiagnosis(){
+  const box = document.getElementById('diagnosisQuestions');
+  box.innerHTML = diagnosisItems.map((q,i)=>`
+    <div class="question">
+      <label>
+        <input type="checkbox" class="diag" data-weight="${q.weight}" data-critical="${q.critical ? '1' : '0'}" />
+        <span>
+          ${i+1}. ${escapeHtml(q.text)}
+          <span class="weightTag ${q.level === 'high' ? 'high' : q.level === 'mid' ? 'mid' : ''}">${q.critical ? '最重要' : '重要度'} ${q.weight}</span>
+        </span>
+      </label>
+    </div>
+  `).join('');
+}
+renderDiagnosis();
+
+function calcDiagnosis(){
+  const boxes = [...document.querySelectorAll('.diag')];
+  const checkedBoxes = boxes.filter(x=>x.checked);
+  const checked = checkedBoxes.length;
+  const maxScore = diagnosisItems.reduce((sum,item)=>sum + Number(item.weight), 0);
+  const score = checkedBoxes.reduce((sum,el)=>sum + Number(el.dataset.weight || 0), 0);
+  const hasCritical = checkedBoxes.some(el=>el.dataset.critical === '1');
+  const pct = Math.round((score / maxScore) * 100);
+
+  let title = "";
+  let body = "";
+  let cls = "";
+
+  if(hasCritical){
+    title = "見直し優先度：高（まず月次数字の前提確認）";
+    body = "月次棚卸・月次減価償却・未払未収等が月次で十分に反映されていない場合、固変分解の分類以前に、月次の利益・限界利益率そのものが大きくずれる可能性があります。まずFXクラウド上の月次決算処理が、経営判断に耐える水準になっているかを優先確認してください。";
+    cls = "warn";
+  }else if(score >= 8){
+    title = "見直し優先度：高";
+    body = "この顧問先は、既存の固変分解を一度丁寧に見直すべきです。特に、外注費・人件費・売上原価内の固定費・電力費など、限界利益率を大きく左右する科目を確認してください。";
+    cls = "warn";
+  }else if(score >= 4){
+    title = "見直し優先度：中";
+    body = "全科目を精査する必要はありませんが、金額の大きい科目・判断が曖昧な科目・業種特有の科目に絞って見直す価値があります。";
+    cls = "note";
+  }else if(score > 0){
+    title = "見直し優先度：低〜中";
+    body = "大きな問題があるとは限りません。ただし、経営助言や継続MASに使う予定がある場合は、主要科目だけ確認しておくと安全です。";
+    cls = "ok";
+  }else{
+    title = "見直し優先度：低";
+    body = "現時点で急いで見直す必要性は高くありません。ただし、価格改定・人員増・投資判断などに使う前には、主要科目だけでも確認してください。";
+    cls = "ok";
+  }
+
+  document.getElementById('diagnosisResult').innerHTML = `
+    <div class="calloutTitle">${title}</div>
+    <div class="meter"><span style="width:${pct}%"></span></div>
+    <p>該当数：${checked} / ${diagnosisItems.length}</p>
+    <p>加重スコア：${score} / ${maxScore}</p>
+    <div class="${cls}">${body}</div>
+  `;
+}
+
+function resetDiagnosis(){
+  document.querySelectorAll('.diag').forEach(x=>x.checked=false);
+  document.getElementById('diagnosisResult').innerHTML = `
+    <div class="calloutTitle">判定結果</div>
+    <p class="muted">チェック後に「見直し優先度を判定」を押してください。</p>
+    <div class="meter"><span id="meterBar"></span></div>
+  `;
+}
+
+const industryData = {
+  "小売業":{
+    summary:"商品仕入が主要な変動費。店舗家賃・固定シフト人件費・設備費は固定費になりやすい。",
+    drivers:["販売数量","客数","決済額"],
+    variable:["商品仕入","包装資材","配送費","決済手数料","ECモール手数料"],
+    fixed:["店舗家賃","正社員給与","固定シフト人件費","POS関連固定費","減価償却費"],
+    watch:["在庫ロス・廃棄","値引き・ポイント負担","EC手数料","売上歩合家賃","パートシフトの変動性"],
+    questions:["パート人件費は売上に応じて調整していますか。","EC販売と店舗販売で手数料率は異なりますか。","値引きやポイント負担はどの程度ありますか。"]
+  },
+  "卸売業":{
+    summary:"仕入高が主要な変動費。物流費・倉庫費・自社配送費の分類が重要。",
+    drivers:["出荷数量","取引件数","売上高"],
+    variable:["商品仕入","仕入諸掛","外注配送費","販売手数料"],
+    fixed:["倉庫家賃","営業担当給与","事務所家賃","車両リース料"],
+    watch:["自社配送の固定負担","物流外注費","リベート","商品群別粗利率"],
+    questions:["配送は自社ですか、外部委託ですか。","物流費は出荷量に比例しますか。","商品群ごとに粗利率は大きく異なりますか。"]
+  },
+  "製造業":{
+    summary:"材料費・外注加工費は変動費。工場人件費・設備償却費は固定費寄り。売上原価の中に固定費が混ざりやすい。",
+    drivers:["生産数量","加工数量","稼働時間"],
+    variable:["原材料費","部品費","外注加工費","生産量連動消耗品"],
+    fixed:["工場正社員給与","工場家賃","機械減価償却費","保守契約料"],
+    watch:["直接労務費","電力費","歩留まり","不良品","工場固定費の原価混入"],
+    questions:["労務費は固定給ですか、出来高ですか。","電力費は基本料金と使用量部分を分けられますか。","製品別の粗利率は異なりますか。"]
+  },
+  "建設業・工事業":{
+    summary:"材料費・協力業者外注費は変動費。現場社員固定給・自社重機・事務所費は固定費寄り。工事別管理が重要。",
+    drivers:["工事件数","施工量","人工数"],
+    variable:["工事材料費","協力業者外注費","現場ごとの重機レンタル","案件別交通費"],
+    fixed:["正社員給与","事務所家賃","自社重機償却費","保険料"],
+    watch:["工事別原価","売上計上と原価計上のズレ","自社施工人件費","手直し工事"],
+    questions:["外注費は工事ごとに紐づいていますか。","自社社員の現場作業時間を把握していますか。","重機は自社保有ですか、現場ごとのレンタルですか。"]
+  },
+  "飲食業":{
+    summary:"食材・飲料仕入は変動費。正社員給与・店舗家賃は固定費。アルバイト給与は運用次第。",
+    drivers:["来店客数","提供数","客単価"],
+    variable:["食材仕入","飲料仕入","包装資材","デリバリー手数料"],
+    fixed:["店舗家賃","正社員給与","リース料","減価償却費"],
+    watch:["アルバイトシフト","廃棄ロス","まかない","水道光熱費","デリバリー手数料"],
+    questions:["アルバイトシフトは売上予測で調整していますか。","廃棄ロスはどの程度ありますか。","デリバリー手数料率はどれくらいですか。"]
+  },
+  "サービス業":{
+    summary:"人件費の見方が重要。正社員給与は固定費、案件別外注や歩合給は変動費寄り。",
+    drivers:["案件数","稼働時間","利用者数"],
+    variable:["案件別外注費","歩合給","成果報酬手数料"],
+    fixed:["正社員給与","事務所家賃","システム利用料","保険料"],
+    watch:["業務委託費","稼働率","時間単価","案件別採算"],
+    questions:["売上は人数・時間・件数のどれに連動していますか。","業務委託は案件別ですか、月額固定ですか。","稼働率は把握していますか。"]
+  },
+  "IT・制作業":{
+    summary:"案件別外注は変動費。社員エンジニア給与・社内基盤費は固定費寄り。クラウド費用は従量か固定かを確認。",
+    drivers:["案件数","開発工数","利用量"],
+    variable:["案件外注費","顧客利用量連動クラウド費","成果報酬型広告費"],
+    fixed:["社員給与","社内基盤クラウド費","ソフト利用料","事務所家賃"],
+    watch:["常駐業務委託","クラウド従量課金","保守対応工数","受託とサブスクの混在"],
+    questions:["クラウド費用は顧客利用量に応じて増えますか。","社員工数を案件別に把握していますか。","保守売上と受託売上を分けていますか。"]
+  },
+  "不動産賃貸・管理業":{
+    summary:"固定費中心。限界利益率は高く出やすいが、資金繰り上は借入返済・修繕・空室の確認が重要。",
+    drivers:["賃貸収入","入退去件数","管理戸数"],
+    variable:["賃料比例の管理委託料","仲介手数料","入退去関連費用"],
+    fixed:["固定資産税","減価償却費","借入利息","固定的管理費"],
+    watch:["空室率","大規模修繕","通常修繕","借入返済","管理料の契約形態"],
+    questions:["管理料は賃料比例ですか、定額ですか。","大規模修繕と通常修繕を分けていますか。","空室率はどの程度ですか。"]
+  },
+  "教育業・日本語学校等":{
+    summary:"常勤講師給与は固定費、コマ数連動の非常勤講師料は変動費寄り。募集手数料・教材費も確認。",
+    drivers:["受講者数","授業コマ数","入学者数"],
+    variable:["非常勤講師料","教材費","入学者紹介手数料","行事費の人数連動分"],
+    fixed:["常勤講師給与","教室家賃","システム利用料","事務職給与"],
+    watch:["講師料の契約形態","定員・教室キャパ","募集広告費","教材費の負担関係"],
+    questions:["講師料は固定給ですか、コマ数連動ですか。","受講者数が増えた場合、どの段階で講師数が増えますか。","教材費は受講者負担ですか、学校負担ですか。"]
+  },
+  "医療・介護・福祉":{
+    summary:"人員配置基準があるため固定費性が強い。材料費・給食費・一部パート給与は変動費寄り。",
+    drivers:["患者数","利用者数","稼働率"],
+    variable:["診療材料費","医薬品","給食材料費","利用者連動パート給与"],
+    fixed:["常勤職員給与","施設家賃","リース料","保守費"],
+    watch:["配置基準","加算要件","稼働率","夜勤・パートの変動性"],
+    questions:["配置基準に対して余裕がありますか。","利用者が増えた場合、追加人員が必要になるのはいつですか。","材料費や給食費は利用者数に比例しますか。"]
+  },
+  "運送業・物流業":{
+    summary:"燃料費・高速代・傭車費は変動費寄り。車両リース・保険・固定給運転手給与は固定費寄り。",
+    drivers:["走行距離","配送件数","稼働台数"],
+    variable:["燃料費","高速代","傭車費","外注運送費"],
+    fixed:["車両リース料","保険料","固定給運転手給与","車庫家賃"],
+    watch:["燃料高騰","空車回送","待機時間","固定給と歩合の区分","車両保有コスト"],
+    questions:["運転手給与に歩合部分はありますか。","燃料費を車両別に把握できますか。","傭車は売上増への対応ですか。"]
+  },
+  "漁業":{
+    summary:"燃料費・氷代・餌代・市場手数料などは変動費寄り。船舶償却費・保険料・係船費・固定給は固定費寄り。季節性と魚種差が大きい。",
+    drivers:["出漁日数","漁獲量","水揚量","魚種別単価"],
+    variable:["燃料費の出漁連動部分","氷代","餌代","箱代・梱包資材","市場手数料","水揚量連動運搬費"],
+    fixed:["船舶減価償却費","船舶保険料","係船料","固定的な乗組員給与","借入利息","漁協の固定会費"],
+    watch:["燃料費","歩合配分と固定給","魚種別採算","季節変動","出漁日数","船舶修繕費"],
+    questions:["人件費は歩合配分ですか、固定給ですか。","燃料費は出漁日数・漁法・漁場にどの程度連動しますか。","市場手数料は水揚金額に比例しますか。","魚種や季節で採算は大きく変わりますか。"]
+  },
+  "水産加工業":{
+    summary:"原魚仕入・副材料・包材・加工外注費は変動費寄り。工場固定人件費・設備償却費・工場家賃は固定費寄り。歩留まり・ロス・冷凍冷蔵コストが重要。",
+    drivers:["原料仕入量","加工数量","生産量","出荷量"],
+    variable:["原魚仕入","副材料費","包材費","加工外注費","保管料（原材料の外部一時保管）","出荷運賃","販売手数料"],
+    fixed:["工場固定人件費","工場家賃","設備減価償却費","品質管理固定費","保守契約料"],
+    watch:["原魚単価","歩留まり","冷凍冷蔵の電力費","保管料","繁忙期パート","ロス・廃棄","製品別粗利"],
+    questions:["原魚の歩留まりを把握していますか。","原材料の保管料は、保管量・保管期間・入出庫量に応じて増減しますか。","水産資源の漁獲時期の偏りを平準化するため、外部保管をどの程度利用していますか。","冷凍冷蔵の電力費は基本料と使用量を分けられますか。","繁忙期の臨時人員はどの程度ありますか。","製品別に粗利率は大きく異なりますか。"]
+  }
+};
+
+function initIndustries(){
+  const sel = document.getElementById('industrySelect');
+  sel.innerHTML = Object.keys(industryData).map(k=>`<option value="${k}">${k}</option>`).join('');
+  sel.value = "水産加工業";
+  initHearingIndustries();
+  renderIndustry();
+}
+
+function initHearingIndustries(){
+  const sel = document.getElementById('hearingIndustrySelect');
+  if(!sel) return;
+  sel.innerHTML = Object.keys(industryData).map(k=>`<option value="${k}">${k}</option>`).join('');
+  sel.value = "水産加工業";
+  const d = new Date();
+  const dateInput = document.getElementById('hearingDate');
+  if(dateInput && !dateInput.value){
+    dateInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+}
+
+function renderIndustry(){
+  const key = document.getElementById('industrySelect').value;
+  const kw = document.getElementById('keywordInput').value.trim();
+  const d = industryData[key];
+  const all = [...d.variable, ...d.fixed, ...d.watch, ...d.questions];
+  const hits = kw ? all.filter(x=>x.includes(kw)) : [];
+
+  const hitHtml = kw ? `
+    <div class="${hits.length ? 'ok' : 'warn'}">
+      <strong>検索結果：</strong>${hits.length ? `${hits.length}件見つかりました。` : `「${escapeHtml(kw)}」に一致する項目はありません。別の言葉で検索してください。`}
+      ${hits.length ? `<div class="pillBox">${hits.map(x=>`<span class="pill r">${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+    </div>
+  ` : '';
+
+  document.getElementById('industryView').innerHTML = `
+    ${hitHtml}
+    <div class="card em">
+      <h3>${escapeHtml(key)}</h3>
+      <p>${escapeHtml(d.summary)}</p>
+      <div class="pillBox">
+        ${d.drivers.map(x=>`<span class="pill">連動軸：${escapeHtml(x)}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="cards two">
+      <div class="card">
+        <h3>変動費になりやすいもの</h3>
+        <div class="pillBox">${d.variable.map(x=>`<span class="pill v">${escapeHtml(x)}</span>`).join('')}</div>
+      </div>
+      <div class="card">
+        <h3>固定費になりやすいもの</h3>
+        <div class="pillBox">${d.fixed.map(x=>`<span class="pill f">${escapeHtml(x)}</span>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>この業種で特に見直したい科目・論点</h3>
+      <div class="pillBox">${d.watch.map(x=>`<span class="pill j">${escapeHtml(x)}</span>`).join('')}</div>
+    </div>
+
+    <h2 style="margin-top:20px">顧問先への確認質問</h2>
+    ${d.questions.map((q,i)=>`
+      <div class="scenario">
+        <div class="calloutTitle">質問 ${i+1}</div>
+        ${escapeHtml(q)}
+      </div>
+    `).join('')}
+
+    <div class="note">
+      <strong>使い方</strong><br>
+      ここに表示される項目と、TKC会計ソフト上の現在の固変分解を見比べてください。
+      違和感のある科目があれば、元帳・請求書・契約形態・顧問先への質問で確認します。
+    </div>
+  `;
+}
+initIndustries();
+
+function generateHearingSheet(){
+  const client = document.getElementById('hearingClient')?.value.trim() || "＿＿＿＿＿＿＿＿＿＿";
+  const staff = document.getElementById('hearingStaff')?.value.trim() || "＿＿＿＿＿＿＿＿＿＿";
+  const date = document.getElementById('hearingDate')?.value.trim() || "＿＿＿＿年＿＿月＿＿日";
+  const industry = document.getElementById('hearingIndustrySelect')?.value || "水産加工業";
+  const focus = document.getElementById('hearingFocus')?.value.trim() || "＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿";
+  const d = industryData[industry];
+
+  const commonQuestions = [
+    "売上が増えたとき、必ず一緒に増える費用は何ですか。",
+    "売上が減っても、すぐには減らない費用は何ですか。",
+    "外注費は、案件ごとに発生しますか。それとも毎月ほぼ定額ですか。",
+    "人件費は、固定給・歩合給・出来高・シフト調整のどれに近いですか。",
+    "水道光熱費・燃料費・車両費などに、売上や操業度に応じて増減する部分はありますか。",
+    "最近、商品構成・価格・仕入単価・外注比率・人員体制に変化はありましたか。",
+    "現在の限界利益率は、経営者の実感と合っていますか。",
+    "月次棚卸は実施していますか。実施していない場合、月次の粗利率が実態とずれていませんか。",
+    "月次減価償却費、未払費用、未収収益、前払費用、前受収益などは月次で反映していますか。",
+    "売上計上月と、対応する仕入・外注費・材料費の計上月にずれはありませんか。"
+  ];
+
+  const html = `
+    <div class="printOnlyHeader">
+      <h2>固変分解 見直しヒアリングシート</h2>
+    </div>
+    <h3>固変分解 見直しヒアリングシート</h3>
+    <p class="small">目的：TKC会計ソフト上の既存の固変分解が、現在の事業実態に合っているかを確認する。</p>
+
+    <div class="tableWrap">
+      <table>
+        <tbody>
+          <tr><th style="width:22%">顧問先名</th><td>${escapeHtml(client)}</td><th style="width:18%">確認日</th><td>${escapeHtml(date)}</td></tr>
+          <tr><th>担当者名</th><td>${escapeHtml(staff)}</td><th>対象業種</th><td>${escapeHtml(industry)}</td></tr>
+          <tr><th>重点確認科目</th><td colspan="3">${escapeHtml(focus)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>1. この業種で見直したい主な論点</h3>
+    <div class="pillBox">
+      ${d.watch.map(x=>`<span class="pill j">${escapeHtml(x)}</span>`).join('')}
+    </div>
+
+    <h3>2. 変動費・固定費の目安</h3>
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>変動費になりやすいもの</th><th>固定費になりやすいもの</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>${d.variable.map(x=>`・${escapeHtml(x)}`).join('<br>')}</td>
+            <td>${d.fixed.map(x=>`・${escapeHtml(x)}`).join('<br>')}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3. 業種別の確認質問</h3>
+    <ol>
+      ${d.questions.map(q=>`<li>${escapeHtml(q)}<br>回答：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</li>`).join('')}
+    </ol>
+
+    <h3>4. 共通の確認質問</h3>
+    <ol>
+      ${commonQuestions.map(q=>`<li>${escapeHtml(q)}<br>回答：＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</li>`).join('')}
+    </ol>
+
+    <h3>5. 確認後の所内メモ</h3>
+    <p>見直しが必要と思われる科目：</p>
+    <p>＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</p>
+    <p>次回までの対応：</p>
+    <p>＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿</p>
+  `;
+  document.getElementById('hearingSheetPreview').innerHTML = html;
+}
+
+function printHearingSheet(){
+  const preview = document.getElementById('hearingSheetPreview');
+  if(!preview || preview.textContent.includes('ヒアリングシートを作成')){
+    generateHearingSheet();
+  }
+  const w = window.open('', '_blank');
+  w.document.write(`
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+      <meta charset="utf-8" />
+      <title>固変分解 見直しヒアリングシート</title>
+      <style>
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;color:#111827;line-height:1.7;margin:24px;}
+        h2{font-size:22px;margin:0 0 12px;color:#416a78}
+        h3{font-size:17px;margin:18px 0 8px;color:#416a78}
+        .small{font-size:13px;color:#6b7280}
+        table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0}
+        th,td{border:1px solid #d1d5db;padding:8px;text-align:left;vertical-align:top}
+        th{background:#f8fafc}
+        .pillBox{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+        .pill{display:inline-block;border-radius:999px;padding:5px 9px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700}
+        ol{padding-left:22px}
+        li{margin:8px 0}
+        @media print{body{margin:14mm}.pillBox{display:block}.pill{margin:2px;display:inline-block}}
+      </style>
+    </head>
+    <body>${preview.innerHTML}</body>
+    </html>
+  `);
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/\"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+</script>
+</body>
+</html>
