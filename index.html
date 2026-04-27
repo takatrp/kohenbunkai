@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>固変分解 見直し支援ツール｜松本会計</title>
+<link rel="icon" type="image/png" href="./for%20staff.png" />
+<link rel="shortcut icon" type="image/png" href="./for%20staff.png" />
+<link rel="apple-touch-icon" href="./for%20staff.png" />
 <style>
   :root{
     --brand:#578899;
@@ -44,7 +47,10 @@
     align-items:center;
   }
   @media(max-width:900px){.hero{grid-template-columns:1fr}}
-  h1{font-size:clamp(25px,3.4vw,40px);line-height:1.25;margin:0 0 12px;font-weight:900;letter-spacing:.01em}
+  .brandTitle{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+  .brandLogo{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#fff;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+  h1{font-size:clamp(18px,2.2vw,28px);line-height:1.25;margin:0;font-weight:900;letter-spacing:.01em}
+  @media(max-width:560px){.brandLogo{width:38px;height:38px;border-radius:10px}}
   .lead{margin:0;font-size:16px;opacity:.95;max-width:760px}
   .heroCard{
     background:rgba(255,255,255,.14);
@@ -276,9 +282,12 @@
 <header>
   <div class="wrap hero">
     <div>
-      <h1>固変分解 見直し支援ツール</h1>
+      <div class="brandTitle">
+        <img class="brandLogo" src="./for%20staff.png" alt="松本会計スタッフ向けロゴ" />
+        <h1>固変分解 見直し支援ツール</h1>
+      </div>
       <p class="lead">
-        TKC会計ソフトで設定済みの固変分解を、業種特性と費用の実態に照らして見直すための所内用ツールです。
+        FXクラウドで設定済みの固変分解を、業種特性と費用の実態に照らして見直すための所内用ツールです。
         全件を精査するのではなく、担当者が「この分類は本当に実態に合っているか」と気づくきっかけを作ります。
       </p>
       <div class="tabs">
@@ -315,7 +324,7 @@
         <div class="footerNote">
           <strong>位置づけ</strong><br>
           このツールは、固変分解の入力・出力を代行するものではありません。<br>
-          TKC会計ソフト上の既存設定を、担当者が見直すための教育・確認ツールです。
+          FXクラウド上の既存設定を、担当者が見直すための教育・確認ツールです。
         </div>
       </div>
     </aside>
@@ -333,7 +342,7 @@
 
           <div class="warn">
             <strong>大事な前提</strong><br>
-            TKC会計ソフト上では、ひとまずの固変分解が設定されています。問題は、設定が存在することではなく、
+            FXクラウド上では、ひとまずの固変分解が設定されています。問題は、設定が存在することではなく、
             <strong>その分類が顧問先の実態に合っているかを見直す機会が少ないこと</strong>です。
           </div>
 
@@ -921,7 +930,7 @@ function renderIndustry(){
 
     <div class="note">
       <strong>使い方</strong><br>
-      ここに表示される項目と、TKC会計ソフト上の現在の固変分解を見比べてください。
+      ここに表示される項目と、FXクラウド上の現在の固変分解を見比べてください。
       違和感のある科目があれば、元帳・請求書・契約形態・顧問先への質問で確認します。
     </div>
   `;
@@ -954,7 +963,7 @@ function generateHearingSheet(){
       <h2>固変分解 見直しヒアリングシート</h2>
     </div>
     <h3>固変分解 見直しヒアリングシート</h3>
-    <p class="small">目的：TKC会計ソフト上の既存の固変分解が、現在の事業実態に合っているかを確認する。</p>
+    <p class="small">目的：FXクラウド上の既存の固変分解が、現在の事業実態に合っているかを確認する。</p>
 
     <div class="tableWrap">
       <table>
